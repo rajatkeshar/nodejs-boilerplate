@@ -5,40 +5,21 @@ const Users = require(global.appDir + '/models/users');
 module.exports = function() {
 
     return {
-        login: function(request, response) {
-            Users.getUserByUsername(request.body.username, function(err, user) {
-    			if(err) throw err;
-    			if(!user) {
-    				response.json({
-    					error: true,
-    					code: 4004,
-    					msg: "Unknown User",
-    					data: request.body
-    				});
-    			}
-
-    			if(user && user.password) {
-                    Users.comparePassword(request.body.password, user.password, function(err, isMatch) {
-        				if(err) throw err;
-        				if(isMatch) {
-        					response.json(auth.authorize(request, user));
-                            var email = user.email;
-                            var subject = "Login To App";
-                            var messBody = "Hi " +user.name + "\n You have logged in to app";
-                            mailer.sendEmail(email, subject, messBody, function(info) {
-                                console.log(info);
-                            });
-        				} else {
-        					response.json({
-        						error: true,
-        						code: 4004,
-        						msg: "Incorrect Password",
-        						data: null
-        					});
-        				}
-        			});
+        login: async function(request, response) {
+            try {
+                let user = await Users.getUserByUsername(request.body.username);
+                if(!user) {
+                    return response.json({ error: true, code: 4004, msg: "Unknown User!", data: request.body });
                 }
-    		});
+                let isMatch = await Users.comparePassword(request.body.password, user.password);
+                if(isMatch) {
+                    response.json(auth.authorize(request, user));
+                } else {
+                    response.json({ error: true, code: 4004, msg: "Incorrect Password", data: null });
+                }
+            } catch (e) {
+                response.json({ error: true, code: 400, msg: "Something went wrong!", data: request.body });
+            }
         },
         forgetPassword: function(request, response) {
             Users.resetPasswordToken(function(err, token) {

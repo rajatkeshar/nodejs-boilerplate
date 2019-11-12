@@ -11,7 +11,7 @@ global.appDir = path.dirname(require.main.filename);
 const auth = require('./lib/auth')();
 
 mongoose.Promise = global.Promise;
-mongoose.connect("mongodb://localhost:27017/chainData", {
+mongoose.connect("mongodb://localhost:27017/users", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true
