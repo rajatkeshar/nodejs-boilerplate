@@ -37,44 +37,28 @@ module.exports = function() {
                     return response.json({ error: true, code: 4004, msg: "User Already Verified!", data: request.body });
                 }
                 res = await Users.updateUser({userId: request.userId}, {status: true});
-                response.json({ error: true, code: 400, msg: "Status Updated Successfully", data: res });
+                response.json({ error: true, code: 400, msg: "Account Verified Successfully", data: res });
             } catch (e) {
                 response.json({ error: true, code: 400, msg: "Something went wrong!", data: request.body });
             }
         },
-        forgetPassword: function(request, response) {
-            Users.resetPasswordToken(function(err, token) {
-                Users.getUserByEmailId(request.body.email, function(err, user) {
-                    if (user) {
-                        user.resetPasswordToken = token;
-                        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-
-                        user.save(function(err, user) {
-                            response.json({
-                                error: false,
-                                code: 2000,
-                                msg: "A Link Has Been Sent To Your Email Id, Check Now",
-                                data: user
-                            });
-
-                            var link = '<a href="' + process.env.SITE_URL + '/resetPassword?code=' + user.resetPasswordToken + '">' + process.env.SITE_URL + '/resetPassword?code=' + user.resetPasswordToken + '</a>';
-                            var email = request.body.email;
-                            var subject = "Forget Password";
-                            var messBody = "Hi " + user.name + "\n click on the following link to reset password " + link;
-                            mailer.sendEmail(email, subject, messBody, function(info) {
-                                console.log(info);
-                            });
-                        });
-                    } else {
-                        response.json({
-                            error: true,
-                            code: 4004,
-                            msg: "No account with that email address exists.",
-                            data: ''
-                        });
-                    }
-                });
-            });
+        forgetPassword: async function(request, response) {
+            try {
+                let user = await Users.getUserByUsername(request.body.email);
+                if(!user) {
+                    return response.json({ error: true, code: 4004, msg: "Unknown User!", data: request.body });
+                }
+                let token = auth.generateToken(user);
+                let URL = process.env.SITE_URL + '/confirmPassword/' + token;
+                let info = await mailer.sendEmail(user.email, "Node Boilerplate - Forget Password", "\n Click on the following link to reset your password " + URL);
+                if(info && info.messageId) {
+                    response.json({ error: false, code: 2000, msg: "Check Your Email", data: user._id });
+                } else {
+                    response.json({ error: true, code: 400, msg: "Something went wrong!", data: info });
+                }
+            } catch (e) {
+                response.json({ error: true, code: 400, msg: "Something went wrong!", data: request.body });
+            }
         },
         confirmPassword: function(request, response) {
             Users.getUserByResetPasswordToken(request.params.resetPasswordToken, function(err, userData) {
@@ -104,16 +88,9 @@ module.exports = function() {
             });
         },
         logout: function(request, response) {
-
             delete request.headers.token;
             delete request.headers.userId;
-
-            response.json({
-                error: false,
-                code: 2000,
-                msg: "Successfully Logout From Application",
-                data: null
-            });
+            response.json({ error: false, code: 2000, msg: "Successfully Logout From Application", data: null });
         }
     };
 };

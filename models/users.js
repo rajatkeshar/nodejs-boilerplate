@@ -55,11 +55,6 @@ module.exports.updateUser = async function(query, update) {
 	return await Users.findOneAndUpdate(query, update, { upsert: true, new: true, runValidators: true, useFindAndModify: false });
 }
 
-module.exports.getUserByEmailId = function(email, callback) {
-	const query = {email: email};
-	Users.findOne(query, callback);
-};
-
 module.exports.getUserByUserId = function(userId, callback) {
 	const query = {_id: userId};
 	Users.findOne(query, callback);

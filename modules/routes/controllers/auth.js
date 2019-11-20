@@ -12,7 +12,7 @@ module.exports.controller = function(app, model, auth) {
 		model.auth.forgetPassword(request, response);
 	});
 
-	app.put('/confirmPassword/:resetPasswordToken', (request, response)=> {
+	app.put('/confirmPassword/:token', (request, response)=> {
 		model.auth.confirmPassword(request, response);
 	});
 
