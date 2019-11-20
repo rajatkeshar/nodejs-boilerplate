@@ -4,6 +4,10 @@ module.exports.controller = function(app, model, auth) {
 		model.auth.login(request, response);
 	});
 
+    app.get('/verifyAccount/:token', (request, response)=> {
+		model.auth.verifyAccount(request, response);
+	});
+
 	app.post('/forgetPassword', (request, response)=> {
 		model.auth.forgetPassword(request, response);
 	});

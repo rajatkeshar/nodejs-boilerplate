@@ -11,12 +11,33 @@ module.exports = function() {
                 if(!user) {
                     return response.json({ error: true, code: 4004, msg: "Unknown User!", data: request.body });
                 }
+                if(user && !user.status) {
+                    return response.json({ error: true, code: 4004, msg: "User Not Verified!", data: request.body });
+                }
                 let isMatch = await Users.comparePassword(request.body.password, user.password);
                 if(isMatch) {
                     response.json(auth.authorize(request, user));
                 } else {
                     response.json({ error: true, code: 4004, msg: "Incorrect Password", data: null });
                 }
+            } catch (e) {
+                response.json({ error: true, code: 400, msg: "Something went wrong!", data: request.body });
+            }
+        },
+        verifyAccount: async function(request, response) {
+            try {
+                request.headers.token = request.params.token;
+                let parseToken = auth.parseRequestToken(request);
+                let valid = auth.isAuthorized(request);
+                if(!valid) {
+                    return response.json({ error: true, code: 4004, msg: "Unauthorized access", data: request.body });
+                }
+                let user = await Users.getUserByUsername(request.headers.username);
+                if(user && user.status) {
+                    return response.json({ error: true, code: 4004, msg: "User Already Verified!", data: request.body });
+                }
+                res = await Users.updateUser({userId: request.userId}, {status: true});
+                response.json({ error: true, code: 400, msg: "Status Updated Successfully", data: res });
             } catch (e) {
                 response.json({ error: true, code: 400, msg: "Something went wrong!", data: request.body });
             }

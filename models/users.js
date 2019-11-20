@@ -27,11 +27,9 @@ const UsersSchema  = new Schema({
 		type: Date,
 		default: Date.now
 	},
-	resetPasswordToken: {
-		type: String
-	},
-	resetPasswordExpires: {
-		type: Date
+	status: {
+		type: Boolean,
+		default: false
 	}
 });
 
@@ -53,6 +51,9 @@ module.exports.comparePassword = async function(candidatePassword, hash) {
 	return bcrypt.compareSync(candidatePassword, hash)
 };
 
+module.exports.updateUser = async function(query, update) {
+	return await Users.findOneAndUpdate(query, update, { upsert: true, new: true, runValidators: true, useFindAndModify: false });
+}
 
 module.exports.getUserByEmailId = function(email, callback) {
 	const query = {email: email};
@@ -77,11 +78,4 @@ module.exports.updateUserPasswordByResetPasswordToken = function(resetPasswordTo
 			Users.update(query, update, callback);
 		});
 	});
-};
-
-module.exports.resetPasswordToken = function(callback) {
-	crypto.randomBytes(20, function(err, buf) {
-    	const token = buf.toString('hex');
-        callback(err, token);
-    });
 };

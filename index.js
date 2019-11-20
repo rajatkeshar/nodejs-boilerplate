@@ -1,8 +1,9 @@
 require('dotenv').config();
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 const path = require('path');
+const cors = require('cors');
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
 const app = express();
 const http = require('http').Server(app);
@@ -19,6 +20,7 @@ mongoose.connect("mongodb://localhost:27017/users", {
 
 const db = mongoose.connection;
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended:true }));
 

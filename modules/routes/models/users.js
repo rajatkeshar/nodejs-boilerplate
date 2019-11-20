@@ -14,7 +14,10 @@ module.exports = function() {
             			password: request.body.password
         		    })
                 );
-                response.json({ error: false, code: 2000, msg: "User Resisteration Successful", data: user._id });
+                let token = auth.generateToken(user);
+                let URL = process.env.SITE_URL + '/verifyAccount/' + token;
+                let info = mailer.sendEmail(user.email, "Node Boilerplate - Verify Email", URL);
+                response.json({ error: false, code: 2000, msg: "Resisteration Successful, Check Your Email", data: user._id });
             } catch (e) {
                 if(e.code == 11000) {
                     response.json({ error: true, code: e.code, data: null, msg: "User Already Exist" });
