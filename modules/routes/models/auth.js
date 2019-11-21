@@ -36,10 +36,10 @@ module.exports = function() {
                 if(user && user.status) {
                     return response.json({ error: true, code: 4004, msg: "User Already Verified!", data: request.body });
                 }
-                res = await Users.updateUser({userId: request.userId}, {status: true});
+                res = await Users.updateUser({_id: request.headers.userId}, {status: true});
                 response.json({ error: true, code: 400, msg: "Account Verified Successfully", data: res });
             } catch (e) {
-                response.json({ error: true, code: 400, msg: "Something went wrong!", data: request.body });
+                response.json({ error: true, code: 400, msg: "Something went wrong! " + e.message, data: null });
             }
         },
         forgetPassword: async function(request, response) {
@@ -57,35 +57,28 @@ module.exports = function() {
                     response.json({ error: true, code: 400, msg: "Something went wrong!", data: info });
                 }
             } catch (e) {
-                response.json({ error: true, code: 400, msg: "Something went wrong!", data: request.body });
+                response.json({ error: true, code: 400, msg: "Something went wrong! " + e.message, data: request.body });
             }
         },
-        confirmPassword: function(request, response) {
-            Users.getUserByResetPasswordToken(request.params.resetPasswordToken, function(err, userData) {
-                if(userData) {
-                    Users.updateUserPasswordByResetPasswordToken(request.params.resetPasswordToken, request.body.password, function(err, user) {
-                        response.json({
-                            error: false,
-                            code: 2000,
-                            msg: "Your password Updated Successfully",
-                            data: user.resetPasswordToken
-                        });
-                        var email = userData.email;
-                        var subject = "Password Change Successfully";
-                        var messBody = "Hi " + userData.name + "\n You Password Has Been Changed Successfully ";
-                        mailer.sendEmail(email, subject, messBody, function(info) {
-                            console.log(info);
-                        });
-                    });
-                } else {
-                    response.json({
-                        error: true,
-                        code: 4004,
-                        msg: "Your password reset code is Expired",
-                        data: null
-                    });
+        confirmPassword: async function(request, response) {
+            try {
+                request.headers.token = request.params.token;
+                let parseToken = auth.parseRequestToken(request);
+                let valid = auth.isAuthorized(request);
+                if(!valid) {
+                    return response.json({ error: true, code: 4004, msg: "Unauthorized access", data: request.body });
                 }
-            });
+                let user = await Users.getUserByUsername(request.headers.username);
+                let isMatch = await Users.comparePassword(request.body.password, user.password);
+                if(isMatch) {
+                    return response.json({ error: false, code: 2000, msg: "Previous Password Is Matched with New Password", data: null });
+                }
+                res = await Users.updateUserPassword({_id: request.headers.userId}, request.body.password);
+                let info = mailer.sendEmail(user.email, "Node Boilerplate - Update Password", "Your password Updated Successfully");
+                response.json({ error: true, code: 400, msg: "Password Updated Successfully", data: res });
+            } catch (e) {
+                response.json({ error: true, code: 400, msg: "Something went wrong! " + e.message, data: null  });
+            }
         },
         logout: function(request, response) {
             delete request.headers.token;

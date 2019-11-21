@@ -48,5 +48,3 @@ try {
 app.listen(process.env.PORT, (request, response)=> {
 	console.log(`running at port: ${process.env.PORT}`);
 });
-
-//module.exports = app;

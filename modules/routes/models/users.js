@@ -27,7 +27,6 @@ module.exports = function() {
             }
         },
         getUserInfo: function(request, response) {
-            console.log(request.headers.userId);
             Users.getUserByUserId(request.headers.userId, function(err, user) {
                 if(user) {
                     response.json({

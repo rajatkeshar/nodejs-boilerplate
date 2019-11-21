@@ -9,16 +9,16 @@ const UsersSchema  = new Schema({
 		index: true,
 		required: true,
 		unique: true
-		},
+	},
 	name: {
 		type: String,
 		required: true
-		},
+	},
 	email: {
 		type: String,
 		required: true,
 		unique: true
-		},
+	},
 	password: {
 		type: String,
 		required: true
@@ -48,29 +48,21 @@ module.exports.getUserByUsername = async function(data) {
 };
 
 module.exports.comparePassword = async function(candidatePassword, hash) {
-	return bcrypt.compareSync(candidatePassword, hash)
+	return bcrypt.compareSync(candidatePassword, hash);
 };
 
 module.exports.updateUser = async function(query, update) {
 	return await Users.findOneAndUpdate(query, update, { upsert: true, new: true, runValidators: true, useFindAndModify: false });
 }
 
+module.exports.updateUserPassword = async function(query, password) {
+	const salt = bcrypt.genSaltSync(10);
+	password = bcrypt.hashSync(password, salt);
+	const update = {$set: {password: password}};
+	return await Users.findOneAndUpdate(query, update, { upsert: true, new: true, runValidators: true, useFindAndModify: false });
+};
+
 module.exports.getUserByUserId = function(userId, callback) {
 	const query = {_id: userId};
 	Users.findOne(query, callback);
-};
-
-module.exports.getUserByResetPasswordToken = function(resetPasswordToken, callback) {
-	const query = {resetPasswordToken: resetPasswordToken, resetPasswordExpires: { $gt: Date.now() }};
-	Users.findOne(query, callback);
-};
-
-module.exports.updateUserPasswordByResetPasswordToken = function(resetPasswordToken, password, callback) {
-	bcrypt.genSalt(10, function(err, salt) {
-		bcrypt.hash(password, salt, function(err, hash) {
-			const query = {resetPasswordToken: resetPasswordToken};
-			const update = {$set: {password: hash, resetPasswordToken: undefined, resetPasswordExpires: undefined}};
-			Users.update(query, update, callback);
-		});
-	});
 };
